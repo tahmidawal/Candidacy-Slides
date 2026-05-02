@@ -1,0 +1,584 @@
+/* ===== Global polish on top of Reveal white theme ===== */
+
+.reveal {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #1f2937;
+  font-size: 30px;     /* tighter base so content fits 1280x720 */
+}
+
+/* Box-sizing so padding never pushes a slide past 1280x720 */
+.reveal section,
+.reveal section *,
+.reveal section *::before,
+.reveal section *::after {
+  box-sizing: border-box;
+}
+
+.reveal section {
+  text-align: left;
+}
+
+.reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: -0.01em;
+}
+
+/* ===== Title slide ===== */
+
+.reveal h1.title {
+  font-size: 1.7em;
+  margin-bottom: 0.2em;
+  text-align: center;
+  background: linear-gradient(90deg, #1e3a8a 0%, #6d28d9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.reveal .subtitle {
+  font-size: 0.95em;
+  font-weight: 400;
+  color: #4b5563;
+  text-align: center;
+  margin-bottom: 1.4em;
+}
+
+.reveal .subtitle small {
+  font-size: 0.7em;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.reveal .author {
+  text-align: center;
+  font-size: 0.7em;
+  color: #4b5563;
+  margin-top: 0.8em;
+}
+
+.reveal .hint {
+  text-align: center;
+  font-size: 0.5em;
+  color: #9ca3af;
+  margin-top: 3em;
+}
+
+.kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 0.9em;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+}
+
+/* ===== Section headings (slide titles) ===== */
+
+.reveal section > h2 {
+  text-align: center;
+  font-size: 1.15em;
+  margin: 0 0 0.4em 0;
+  color: #111827;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.2em;
+}
+
+/* Defensive: every SVG inside a slide stays within its container */
+.reveal section svg {
+  max-width: 100%;
+  height: auto;
+}
+.reveal section svg[width] {
+  max-width: 100%;
+}
+
+/* ===== Three-column overview cards ===== */
+
+.three-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.2em;
+  margin-top: 1.5em;
+}
+
+.card {
+  position: relative;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #2563eb;
+  border-radius: 6px;
+  padding: 1em 1em 1em 1.2em;
+  text-align: left;
+}
+
+.card-num {
+  position: absolute;
+  top: -14px;
+  left: -14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: white;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8em;
+}
+
+.card h4 {
+  margin: 0 0 0.4em 0;
+  color: #1e3a8a;
+  font-size: 1em;
+}
+
+.card p {
+  margin: 0;
+  font-size: 0.7em;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.footer-note {
+  margin-top: 2em;
+  text-align: center;
+  font-size: 0.7em;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* ===== Two-column methodology slide ===== */
+
+.two-col {
+  display: grid;
+  grid-template-columns: 0.95fr 1fr;
+  gap: 1.4em;
+  align-items: start;
+}
+
+.math-col {
+  font-size: 0.56em;
+  text-align: left;
+  line-height: 1.45;
+}
+
+.math-col .step {
+  margin: 0 0 0.7em 0;
+  padding: 0.45em 0.7em;
+  background: #f9fafb;
+  border-left: 3px solid #cbd5e1;
+  border-radius: 0 4px 4px 0;
+  transition: border-color 0.3s ease;
+}
+
+.math-col .step:last-child {
+  margin-bottom: 0;
+}
+
+.math-col .katex-display {
+  margin: 0.35em 0;
+}
+
+.math-col .step.visible {
+  border-left-color: #2563eb;
+}
+
+/* Tighter variant for slides with many fragments (e.g., 7-step walkthrough). */
+.math-col.tight {
+  font-size: 0.5em;
+}
+
+.math-col.tight .step {
+  margin: 0 0 0.45em 0;
+  padding: 0.35em 0.6em;
+}
+
+.math-col.tight .katex-display {
+  margin: 0.25em 0;
+}
+
+.math-col.tight .step-tag {
+  font-size: 0.78em;
+  padding: 1px 6px;
+}
+
+.step-tag {
+  display: inline-block;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: white;
+  background: #2563eb;
+  padding: 1px 8px;
+  border-radius: 3px;
+  margin-right: 0.5em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.math-col .why {
+  display: block;
+  margin-top: 0.6em;
+  font-size: 0.85em;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* KaTeX size tweak inside math-col */
+.math-col .katex {
+  font-size: 1em;
+}
+
+.math-col .katex-display {
+  margin: 0.6em 0;
+}
+
+/* ===== Visualization column ===== */
+
+.viz-col {
+  text-align: center;
+}
+
+.viz-col canvas {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.viz-caption {
+  margin-top: 0.6em;
+  font-size: 0.55em;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.replay-btn {
+  display: inline-block;
+  margin-left: 0.6em;
+  padding: 4px 12px;
+  font-size: 0.85em;
+  font-family: inherit;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.replay-btn:hover {
+  background: #1d4ed8;
+}
+
+.replay-btn:active {
+  background: #1e40af;
+}
+
+/* =====  New slide patterns  ===== */
+
+/* Big highlight number for motivation slides */
+.big-number {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: #1e3a8a;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.big-number small {
+  display: block;
+  font-size: 0.4em;
+  font-weight: 400;
+  color: #6b7280;
+  margin-top: 0.5em;
+  letter-spacing: 0;
+}
+
+/* Two-camp comparison grid */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1em;
+  margin-top: 0.4em;
+}
+
+.compare-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.7em 0.9em;
+}
+
+.compare-card.left  { border-top: 4px solid #ea580c; }
+.compare-card.right { border-top: 4px solid #2563eb; }
+
+.compare-card h3 {
+  margin: 0 0 0.4em 0;
+  font-size: 0.95em;
+  color: #111827;
+}
+
+.compare-card .who {
+  font-size: 0.55em;
+  color: #6b7280;
+  font-style: italic;
+  margin-bottom: 0.8em;
+}
+
+.compare-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.62em;
+  line-height: 1.5;
+}
+
+.compare-card li {
+  padding: 0.25em 0;
+}
+
+.compare-card li.pro::before {
+  content: '✓';
+  color: #059669;
+  font-weight: 700;
+  margin-right: 0.5em;
+}
+
+.compare-card li.con::before {
+  content: '✗';
+  color: #dc2626;
+  font-weight: 700;
+  margin-right: 0.5em;
+}
+
+/* Sundar-style callout boxes */
+.intuition-box {
+  background: #eff6ff;
+  border-left: 4px solid #2563eb;
+  border-radius: 0 6px 6px 0;
+  padding: 0.55em 0.8em;
+  margin: 0.6em 0;
+  font-size: 0.52em;
+  line-height: 1.45;
+}
+
+.intuition-box::before {
+  content: 'In Plain English';
+  display: block;
+  font-weight: 700;
+  font-size: 0.85em;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.3em;
+}
+
+.walkthrough-box {
+  background: #fef3c7;
+  border-left: 4px solid #d97706;
+  border-radius: 0 6px 6px 0;
+  padding: 0.55em 0.8em;
+  margin: 0.6em 0;
+  font-size: 0.52em;
+  line-height: 1.45;
+}
+
+.walkthrough-box::before {
+  content: 'Math Walkthrough';
+  display: block;
+  font-weight: 700;
+  font-size: 0.85em;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.3em;
+}
+
+/* Section divider styling for "Motivation" / "Method" / "Results" */
+/* Higher specificity to override Reveal's `.reveal .slides section { display: block }`. */
+.reveal .slides > section.section-divider,
+.reveal .slides > section.title-slide {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  height: 100%;
+}
+
+.section-divider {
+  padding: 2em 2em;
+}
+
+.section-divider .section-num {
+  font-size: 0.55em;
+  color: #9ca3af;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  margin-bottom: 0.6em;
+}
+
+.section-divider h1 {
+  font-size: 1.8em;
+  font-weight: 700;
+  background: linear-gradient(90deg, #1e3a8a 0%, #6d28d9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0;
+}
+
+.section-divider .section-tagline {
+  font-size: 0.7em;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 0.5em;
+}
+
+/* Roadmap step badges */
+.roadmap {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8em;
+  margin-top: 1.4em;
+}
+
+.roadmap-step {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-top: 3px solid #2563eb;
+  border-radius: 6px;
+  padding: 0.9em 0.8em;
+  position: relative;
+}
+
+.roadmap-step .step-n {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 24px;
+  background: #2563eb;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55em;
+  font-weight: 700;
+}
+
+.roadmap-step h4 {
+  margin: 0.3em 0 0.2em 0;
+  font-size: 0.7em;
+  color: #1e3a8a;
+  text-align: center;
+}
+
+.roadmap-step p {
+  margin: 0;
+  font-size: 0.5em;
+  color: #4b5563;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* PDE icon grid (motivation slide 1) */
+.pde-icons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6em;
+  margin: 0.6em 0 0.8em 0;
+  align-items: end;
+  justify-items: center;
+}
+
+.pde-icon {
+  text-align: center;
+  max-width: 120px;
+}
+
+.pde-icon svg {
+  width: 56px !important;
+  height: 56px !important;
+  display: inline-block;
+}
+
+.pde-icon h4 {
+  margin: 0.2em 0 0 0;
+  font-size: 0.55em;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.pde-icon p {
+  margin: 0;
+  font-size: 0.45em;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Headline with big number layout */
+.headline {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1.2em;
+  align-items: center;
+  margin-top: 0.5em;
+}
+
+.headline-text p {
+  font-size: 0.55em;
+  color: #374151;
+  line-height: 1.55;
+  margin: 0 0 0.5em 0;
+}
+
+.headline-number {
+  text-align: center;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 0.9em 0.8em;
+}
+
+/* Caption at bottom of one-idea slides (Sundar style) */
+.slide-caption {
+  margin-top: 0.8em;
+  padding: 0.5em 0.9em;
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.55em;
+  color: #92400e;
+  font-style: italic;
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* Geometric figure caption (small, gray) */
+.fig-caption {
+  margin-top: 0.4em;
+  font-size: 0.55em;
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+}
+
+/* ===== Reveal navigation tweaks ===== */
+
+.reveal .controls {
+  color: #6b7280;
+}
+
+.reveal .progress {
+  color: #2563eb;
+  height: 3px;
+}

@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NM-ROM — Interactive Slides</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reset.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/theme/white.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- ============= TITLE ============= -->
+      <section class="title-slide">
+        <h1 class="title">Non-linear Manifold ROM</h1>
+        <h3 class="subtitle">
+          for Elliptic and Parabolic PDEs<br>
+          <small>via Hardware-Accelerated Galerkin Projection</small>
+        </h3>
+        <p class="author">Tahmid Awal &middot; Tufts University &middot; University of Utah</p>
+        <p class="hint">→ to advance &nbsp;|&nbsp; <span class="kbd">space</span> next slide &nbsp;|&nbsp; <span class="kbd">esc</span> overview</p>
+      </section>
+
+      <!-- ============= SECTION DIVIDER: MOTIVATION ============= -->
+      <section class="section-divider">
+        <p class="section-num">Part 1</p>
+        <h1>Motivation</h1>
+        <p class="section-tagline">What's out there, and what's missing</p>
+      </section>
+
+      <!-- ============= M1: PDES RUN THE WORLD ============= -->
+      <section>
+        <h2>PDEs run the physical world</h2>
+
+        <div class="pde-icons">
+          <div class="pde-icon">
+            <svg viewBox="0 0 70 70" width="70" height="70">
+              <path d="M5 22 Q 17 8, 35 22 T 65 22"  stroke="#2563eb" stroke-width="2.5" fill="none"/>
+              <path d="M5 38 Q 17 24, 35 38 T 65 38" stroke="#2563eb" stroke-width="2.5" fill="none"/>
+              <path d="M5 54 Q 17 40, 35 54 T 65 54" stroke="#2563eb" stroke-width="2.5" fill="none"/>
+            </svg>
+            <h4>Navier-Stokes</h4>
+            <p>fluids, weather</p>
+          </div>
+          <div class="pde-icon">
+            <svg viewBox="0 0 70 70" width="70" height="70">
+              <rect x="30" y="8"  width="10" height="42" rx="3" stroke="#dc2626" stroke-width="2" fill="none"/>
+              <circle cx="35" cy="56" r="8" stroke="#dc2626" stroke-width="2" fill="#fee2e2"/>
+              <line x1="22" y1="18" x2="28" y2="18" stroke="#dc2626" stroke-width="1.5"/>
+              <line x1="22" y1="28" x2="28" y2="28" stroke="#dc2626" stroke-width="1.5"/>
+              <line x1="22" y1="38" x2="28" y2="38" stroke="#dc2626" stroke-width="1.5"/>
+            </svg>
+            <h4>Heat</h4>
+            <p>diffusion, climate</p>
+          </div>
+          <div class="pde-icon">
+            <svg viewBox="0 0 70 70" width="70" height="70">
+              <path d="M8 22 Q 35 50, 62 22" stroke="#7c3aed" stroke-width="3" fill="none"/>
+              <line x1="8"  y1="22" x2="8"  y2="32" stroke="#7c3aed" stroke-width="2"/>
+              <line x1="62" y1="22" x2="62" y2="32" stroke="#7c3aed" stroke-width="2"/>
+              <polygon points="4,32 12,32 8,40" fill="#7c3aed"/>
+              <polygon points="58,32 66,32 62,40" fill="#7c3aed"/>
+              <line x1="35" y1="40" x2="35" y2="58" stroke="#7c3aed" stroke-width="2"/>
+              <polygon points="32,54 38,54 35,60" fill="#7c3aed"/>
+            </svg>
+            <h4>Elasticity</h4>
+            <p>structures, MRI</p>
+          </div>
+          <div class="pde-icon">
+            <svg viewBox="0 0 70 70" width="70" height="70">
+              <ellipse cx="35" cy="35" rx="26" ry="14" stroke="#059669" stroke-width="2" fill="none"/>
+              <ellipse cx="35" cy="35" rx="18" ry="9"  stroke="#059669" stroke-width="2" fill="none"/>
+              <ellipse cx="35" cy="35" rx="10" ry="5"  stroke="#059669" stroke-width="2" fill="none"/>
+              <line x1="35" y1="6" x2="35" y2="64" stroke="#059669" stroke-width="2.5"/>
+              <polygon points="32,9 38,9 35,3" fill="#059669"/>
+            </svg>
+            <h4>Maxwell</h4>
+            <p>EM, photonics</p>
+          </div>
+        </div>
+
+        <div class="headline">
+          <div class="headline-text">
+            <p>Every physical prediction — weather, jet engines, drug binding,
+               brain imaging — comes from solving a PDE.</p>
+            <p>FEM turns the PDE into a sparse linear (or non-linear) system on a mesh.
+               The finer the mesh, the more accurate — and the more expensive.</p>
+          </div>
+          <div class="headline-number">
+            <div class="big-number">10⁶–10⁷
+              <small>unknowns at production resolution</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-caption">
+          Every PDE solve is the bottleneck behind a real-world prediction.
+        </div>
+      </section>
+
+      <!-- ============= M2: CAMP 1 — CLASSICAL SOLVERS ============= -->
+      <section>
+        <h2>Camp 1 &mdash; Classical solvers (FOM)</h2>
+
+        <div class="compare-grid">
+          <div class="compare-card left">
+            <h3>The approach</h3>
+            <p class="who">Finite Element Method + Conjugate Gradient</p>
+            <div style="text-align: center; margin: 1em 0; font-size: 0.8em;">
+              \[ K u = F \]
+            </div>
+            <p style="font-size: 0.6em; color: #4b5563; line-height: 1.5;">
+              Discretise the PDE into a giant sparse system. Solve directly with an iterative
+              Krylov method (CG for SPD problems).
+            </p>
+          </div>
+          <div class="compare-card right">
+            <h3>Trade-offs</h3>
+            <p class="who">What you get / what it costs</p>
+            <ul>
+              <li class="pro">Provably accurate (convergence theory)</li>
+              <li class="pro">Conservation laws preserved</li>
+              <li class="pro">Boundary conditions enforced exactly</li>
+              <li class="con">Sparse matrix-vector multiplies are <em>memory-bound</em> on GPUs</li>
+              <li class="con">Iteration count grows with mesh refinement</li>
+              <li class="con">Cost scales as $\mathcal{O}(I_{\text{Krylov}} \cdot N_z)$</li>
+            </ul>
+            <div style="margin-top: 0.8em; padding: 0.5em; background: white; border-radius: 4px; text-align: center; font-size: 0.6em;">
+              <strong style="color:#dc2626;">~100 seconds</strong>
+              <span style="color:#6b7280;">per CG solve at $N{=}10^6$ on a single A100</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-caption">
+          The gold standard for accuracy. The bottleneck for everything that needs many solves.
+        </div>
+      </section>
+
+      <!-- ============= M3: CAMP 2 — NEURAL SURROGATES ============= -->
+      <section>
+        <h2>Camp 2 &mdash; Neural surrogates</h2>
+
+        <div class="compare-grid">
+          <div class="compare-card left">
+            <h3>The approach</h3>
+            <p class="who">FNO &middot; DeepONet &middot; PINN</p>
+            <div style="text-align: center; margin: 1em 0; font-size: 0.8em;">
+              \[ u \approx \mathrm{NN}(\text{input};\, \theta) \]
+            </div>
+            <p style="font-size: 0.6em; color: #4b5563; line-height: 1.5;">
+              Train a neural network to learn the solution operator end-to-end.
+              At inference, one forward pass replaces the entire PDE solve.
+            </p>
+          </div>
+          <div class="compare-card right">
+            <h3>Trade-offs</h3>
+            <p class="who">What you get / what it costs</p>
+            <ul>
+              <li class="pro">Fast inference (~10× over CG)</li>
+              <li class="pro">One trained model handles many parameter inputs</li>
+              <li class="con"><strong>One trained model = one fixed (accuracy, speed) point</strong></li>
+              <li class="con">No conservation guarantees</li>
+              <li class="con">BCs only via soft penalty in the loss</li>
+              <li class="con">Stiff systems &amp; advection-dominated cases often fail</li>
+            </ul>
+            <div style="margin-top: 0.8em; padding: 0.5em; background: white; border-radius: 4px; text-align: center; font-size: 0.6em;">
+              <strong style="color:#dc2626;">No knob to dial</strong>
+              <span style="color:#6b7280;">— want better accuracy? Train another model.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-caption">
+          Fast — but a single trained model gives one fixed accuracy/speed point. No tuning at deployment.
+        </div>
+      </section>
+
+      <!-- ============= M4: THE GAP — NM-ROM ============= -->
+      <section>
+        <h2>The middle path &mdash; Non-linear Manifold ROM</h2>
+
+        <div style="text-align: center; margin: 1.5em 0; font-size: 0.95em; font-weight: 600; color: #1e3a8a;">
+          Use a neural net to <em>compress</em>. &nbsp;Use Galerkin to <em>solve</em>.
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.7em;">
+          <thead>
+            <tr style="background: #f3f4f6;">
+              <th style="padding: 0.6em; border: 1px solid #e5e7eb; text-align: left;">Property</th>
+              <th style="padding: 0.6em; border: 1px solid #e5e7eb;">Classical FOM</th>
+              <th style="padding: 0.6em; border: 1px solid #e5e7eb;">Neural surrogate</th>
+              <th style="padding: 0.6em; border: 1px solid #e5e7eb; background: #eff6ff; color:#1e3a8a;"><strong>NM-ROM</strong></th>
+            </tr>
+          </thead>
+          <tbody style="font-size: 0.95em;">
+            <tr>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb;">Provably accurate</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #059669;">✓</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #d97706;">⚠</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #059669; background:#eff6ff;">✓</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb;">Fast inference</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #dc2626;">✗</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #059669;">✓</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #059669; background:#eff6ff;">✓ (up to 191×)</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb;">BCs enforced exactly</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #059669;">✓</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #dc2626;">✗</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #059669; background:#eff6ff;">✓ (via masking)</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb;">Tunable at inference</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #d97706;">⚠ (just iters)</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #dc2626;">✗</td>
+              <td style="padding: 0.5em; border: 1px solid #e5e7eb; text-align: center; color: #059669; background:#eff6ff;">✓ (3 knobs, no retraining)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="intuition-box">
+          The neural net only does the <em>compression</em> — turning a million unknowns
+          into ~24 latent numbers. The actual PDE is still solved with classical numerics
+          (Galerkin projection + Gauss-Newton), just in the small space.
+          That's how we keep the accuracy guarantees of FOM while getting the speed of ML.
+        </div>
+      </section>
+
+      <!-- ============= SECTION DIVIDER: METHOD ============= -->
+      <section class="section-divider">
+        <p class="section-num">Part 2</p>
+        <h1>The Method</h1>
+        <p class="section-tagline">Step by step, with the math made visual</p>
+      </section>
+
+      <!-- ============= METHODOLOGY OVERVIEW ============= -->
+      <section>
+        <h2>Roadmap &mdash; four ideas, in order</h2>
+
+        <div class="roadmap">
+          <div class="roadmap-step">
+            <div class="step-n">1</div>
+            <h4>Compress</h4>
+            <p>Autoencoder squashes the FEM state from $N$ down to $k$ latent numbers.
+               Mask enforces Dirichlet BCs exactly.</p>
+          </div>
+          <div class="roadmap-step">
+            <div class="step-n">2</div>
+            <h4>Project</h4>
+            <p>Galerkin projection: left-multiply the FEM residual by $J_\mathcal{D}^\top$
+               to collapse $N$ equations into $k$.</p>
+          </div>
+          <div class="roadmap-step">
+            <div class="step-n">3</div>
+            <h4>Solve</h4>
+            <p>Gauss-Newton in the $k$-dim latent space.
+               For Heat: backward-Euler in latent space.</p>
+          </div>
+          <div class="roadmap-step">
+            <div class="step-n">4</div>
+            <h4>Speed up</h4>
+            <p>Empirical Quadrature picks $\sim 1\%$ of nodes.
+               JAX gives $J\!\cdot\!v$ matrix-free.</p>
+          </div>
+        </div>
+
+        <div class="intuition-box">
+          Read this slide left-to-right. Steps 1–3 are <em>what</em> we do mathematically.
+          Step 4 is <em>how</em> we make it fast in practice. The next 8 slides walk through each step.
+        </div>
+      </section>
+
+      <!-- ============= 1. MANIFOLD + MASKED DECODER ============= -->
+      <section data-anim-init="manifold">
+        <h2>1. Non-linear Manifold &amp; Boundary Enforcement</h2>
+
+        <div class="two-col">
+          <div class="math-col">
+            <p class="step fragment" data-step="encode">
+              <span class="step-tag">Encode</span>
+              The encoder compresses the FEM state from $N$ DoFs down to $k$ latent coords:
+              \[ z = \mathcal{E}(u), \quad u \in \mathbb{R}^N,\ z \in \mathbb{R}^k,\ k \ll N \]
+            </p>
+
+            <p class="step fragment" data-step="decode">
+              <span class="step-tag">Decode</span>
+              The decoder reconstructs the field from the latent code:
+              \[ \hat{u} = \mathcal{D}(z) \]
+            </p>
+
+            <p class="step fragment" data-step="mask">
+              <span class="step-tag">Mask &amp; lift</span>
+              A binary mask $m$ kills boundary nodes, then a lifting vector $u_g$ pastes the Dirichlet values back in:
+              \[ \tilde{u}(z)\;=\;m \odot \mathcal{D}(z)\;+\;u_g \]
+              <small class="why">
+                Why? Because $m_i = 0$ on $\Gamma$ forces $\partial \tilde{u}/\partial z = 0$ on the boundary —
+                so during Galerkin projection, every boundary equation is annihilated automatically. No penalty terms, no soft constraints.
+              </small>
+            </p>
+          </div>
+
+          <div class="viz-col">
+            <canvas id="manifold-viz" width="640" height="460"></canvas>
+            <p class="viz-caption">Click → to step through the encode → decode → mask pipeline.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= GALERKIN GEOMETRIC INTUITION ============= -->
+      <section>
+        <h2>Why project? &mdash; the geometric picture</h2>
+
+        <div class="two-col" style="grid-template-columns: 1.05fr 1fr; gap: 1.2em;">
+          <div style="text-align: center;">
+            <svg viewBox="0 0 620 360" style="width: 100%; height: auto; max-height: 380px;" xmlns="http://www.w3.org/2000/svg">
+              <!-- Manifold M (wavy surface, suggested by stacked curves) -->
+              <g opacity="0.85">
+                <path d="M 30 180 Q 150 110, 290 195 Q 420 270, 590 180"
+                      stroke="#60a5fa" stroke-width="2.5" fill="none"/>
+                <path d="M 30 210 Q 150 140, 290 225 Q 420 300, 590 210"
+                      stroke="#93c5fd" stroke-width="2" fill="none"/>
+                <path d="M 30 240 Q 150 170, 290 255 Q 420 330, 590 240"
+                      stroke="#bfdbfe" stroke-width="1.5" fill="none"/>
+              </g>
+
+              <!-- Tangent plane (parallelogram) at the point -->
+              <polygon points="180,180 390,148 420,278 215,318"
+                       fill="#fed7aa" fill-opacity="0.5"
+                       stroke="#ea580c" stroke-width="2.5"/>
+
+              <!-- Current iterate point on manifold -->
+              <circle cx="290" cy="225" r="6" fill="#1e3a8a"/>
+              <text x="298" y="247" font-size="13" fill="#1e3a8a" font-style="italic">ũ(zₙ)</text>
+
+              <!-- Residual R arrow -->
+              <line x1="290" y1="225" x2="300" y2="55" stroke="#92400e" stroke-width="3.5"/>
+              <polygon points="292,67 308,67 300,46" fill="#92400e"/>
+              <text x="312" y="95" font-size="15" fill="#92400e" font-weight="700">R(ũ)</text>
+              <text x="312" y="113" font-size="10" fill="#92400e" font-style="italic">full residual ∈ ℝᴺ</text>
+
+              <!-- Dashed projection line -->
+              <line x1="300" y1="55" x2="350" y2="185" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4,3"/>
+
+              <!-- Projection J·Δz -->
+              <line x1="290" y1="225" x2="350" y2="185" stroke="#ea580c" stroke-width="3.5"/>
+              <polygon points="343,179 358,186 348,196" fill="#ea580c"/>
+              <text x="365" y="185" font-size="15" fill="#ea580c" font-weight="700">J·Δz</text>
+              <text x="365" y="203" font-size="10" fill="#ea580c" font-style="italic">tangent step ∈ Col(J)</text>
+
+              <!-- Labels -->
+              <text x="35" y="25" font-size="14" fill="#1e3a8a" font-weight="700">𝓜 = { ũ(z) : z ∈ ℝᵏ }</text>
+              <text x="35" y="42" font-size="10" fill="#6b7280" font-style="italic">non-linear manifold (k-dim surface inside ℝᴺ)</text>
+
+              <text x="395" y="138" font-size="14" fill="#ea580c" font-weight="700">tangent plane</text>
+              <text x="395" y="153" font-size="10" fill="#c2410c" font-style="italic">spanned by columns of J</text>
+            </svg>
+            <p class="fig-caption">After Sundar (2026), Fig. 2 — latent Gauss-Newton step.</p>
+          </div>
+
+          <div>
+            <div class="intuition-box" style="margin-top: 0;">
+              <strong>The one-line idea:</strong> we can only correct in directions we can move.
+              The decoder traps us on a $k$-dim surface inside $\mathbb{R}^N$. The residual $R$ points
+              anywhere — but we move only along the manifold. Galerkin = keep the component of $R$
+              that lies in the tangent plane.
+            </div>
+            <div class="walkthrough-box" style="margin-bottom: 0;">
+              Galerkin orthogonality:
+              \[ J_\mathcal{D}^\top R(\tilde{u}) = 0 \]
+              Columns of $J_\mathcal{D}$ span the tangent plane. $J_\mathcal{D}^\top R$ takes the inner
+              product with each tangent direction. Setting it to zero $\Rightarrow$ residual is purely
+              <em>normal</em> to $\mathcal{M}$ — the best we can do without leaving the manifold.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= 2. POISSON GALERKIN PROJECTION ============= -->
+      <section data-anim-init="poisson">
+        <h2>2. Galerkin Projection — Poisson (steady)</h2>
+
+        <div class="two-col">
+          <div class="math-col tight">
+            <p class="step fragment" data-step="residual">
+              <span class="step-tag">Residual</span>
+              FEM discretisation of $-\Delta u = f$ gives the linear system
+              \[ R(u) = Ku - F \;=\; 0, \qquad K \in \mathbb{R}^{N\times N} \]
+            </p>
+
+            <p class="step fragment" data-step="substitute">
+              <span class="step-tag">Substitute</span>
+              Plug the masked manifold $\tilde{u}(z)$ into the residual:
+              \[ R(\tilde{u}(z)) = K\tilde{u}(z) - F \;\in\; \mathbb{R}^N \]
+            </p>
+
+            <p class="step fragment" data-step="project">
+              <span class="step-tag">Project</span>
+              Left-multiply by $J_\mathcal{D}^\top$ — the residual collapses from $\mathbb{R}^N$ to $\mathbb{R}^k$:
+              \[ r_\text{red}(z) \;=\; J_\mathcal{D}^\top(z)\bigl(K\tilde{u}(z) - F\bigr) \;=\; 0 \]
+            </p>
+
+            <p class="step fragment" data-step="gn">
+              <span class="step-tag">Gauss-Newton</span>
+              Solve the $k \times k$ system:
+              \[ \Delta z \;=\; -\bigl(J_\mathcal{D}^\top K\, J_\mathcal{D}\bigr)^{-1} r_\text{red}(z) \]
+              \[ z^{n+1} \;=\; z^n + \Delta z \]
+            </p>
+
+            <p class="step fragment" data-step="iterate">
+              <span class="step-tag">Iterate</span>
+              From cold start $z = 0$. Converges in $\le 8$ iterations.
+              <button class="replay-btn" data-replay="poisson">▶ Replay iteration</button>
+            </p>
+          </div>
+
+          <div class="viz-col">
+            <canvas id="poisson-viz" width="640" height="540"></canvas>
+            <p class="viz-caption">
+              Latent <em>z</em> evolves &middot; decoded <em>ũ(z)</em> approaches target <em>u*</em> &middot;
+              $\|r_\text{red}\|$ drops geometrically.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= 3. INSIDE ONE GN ITERATION ============= -->
+      <section data-anim-init="poisson-step">
+        <h2>3. Inside one Gauss-Newton iteration</h2>
+
+        <div class="two-col">
+          <div class="math-col tight">
+            <p class="step fragment" data-step="cold">
+              <span class="step-tag">Initial guess</span>
+              Cold start in latent space:
+              \[ z^{(0)} = 0 \;\in\; \mathbb{R}^k \]
+            </p>
+
+            <p class="step fragment" data-step="decode">
+              <span class="step-tag">Decode</span>
+              Lift the embedding to the full mesh:
+              \[ \tilde{u}^{(0)} = m \odot \mathcal{D}(z^{(0)}) + u_g \]
+            </p>
+
+            <p class="step fragment" data-step="residual">
+              <span class="step-tag">FOM residual</span>
+              Evaluate the discretised PDE on the lifted state:
+              \[ R^{(0)} = K\tilde{u}^{(0)} - F \;\in\; \mathbb{R}^N \]
+            </p>
+
+            <p class="step fragment" data-step="jacobian">
+              <span class="step-tag">Jacobian</span>
+              Manifold tangent (matrix-free, JAX VJP):
+              \[ J_\mathcal{D} = \frac{\partial \mathcal{D}}{\partial z}\bigg|_{z^{(0)}} \;\in\; \mathbb{R}^{N\times k} \]
+            </p>
+
+            <p class="step fragment" data-step="project">
+              <span class="step-tag">Galerkin project</span>
+              Contract residual with Jacobian — collapse $\mathbb{R}^N \to \mathbb{R}^k$:
+              \[ r_\text{red}^{(0)} = J_\mathcal{D}^{\top}\, R^{(0)} \;\in\; \mathbb{R}^k \]
+            </p>
+
+            <p class="step fragment" data-step="solve">
+              <span class="step-tag">Solve</span>
+              Reduced Hessian, $k\!\times\!k$ linear solve:
+              \[ H\,\Delta z = -r_\text{red}^{(0)}, \quad H = J_\mathcal{D}^{\top} K J_\mathcal{D} \]
+            </p>
+
+            <p class="step fragment" data-step="update">
+              <span class="step-tag">Update embedding</span>
+              New latent state, ready for the next iteration:
+              \[ z^{(1)} = z^{(0)} + \Delta z \]
+              <button class="replay-btn" data-replay="poisson-step">▶ Replay walkthrough</button>
+            </p>
+          </div>
+
+          <div class="viz-col">
+            <canvas id="poisson-step-viz" width="660" height="540"></canvas>
+            <p class="viz-caption">
+              Each fragment lights up the corresponding object on the canvas.
+              Banner at top names the current computation.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= 4. HEAT EQUATION (PARABOLIC) ============= -->
+      <section data-anim-init="heat">
+        <h2>4. Galerkin Projection — Heat (parabolic)</h2>
+
+        <div class="two-col">
+          <div class="math-col">
+            <p class="step fragment" data-step="ode">
+              <span class="step-tag">Semi-discrete</span>
+              FEM in space gives an ODE in time, with mass matrix $M$:
+              \[ M\,\frac{du}{dt} + Ku \;=\; F \]
+            </p>
+
+            <p class="step fragment" data-step="project">
+              <span class="step-tag">Project</span>
+              Substitute $\tilde{u}(z)$ and project by $J_\mathcal{D}^\top$:
+              \[ J_\mathcal{D}^\top M J_\mathcal{D}\,\frac{dz}{dt}
+                 \;=\; J_\mathcal{D}^\top \bigl(F - K\tilde{u}(z)\bigr) \]
+            </p>
+
+            <p class="step fragment" data-step="be">
+              <span class="step-tag">Backward Euler</span>
+              Each implicit time step is a $k \times k$ linear solve:
+              \[ \bigl(J_\mathcal{D}^\top M J_\mathcal{D}
+                    + \Delta t\, J_\mathcal{D}^\top K J_\mathcal{D}\bigr)\, z_{n+1}
+                 \;=\; J_\mathcal{D}^\top M J_\mathcal{D}\, z_n
+                    + \Delta t\, J_\mathcal{D}^\top F \]
+            </p>
+
+            <p class="step fragment" data-step="step">
+              <span class="step-tag">March in time</span>
+              CG in $\mathbb{R}^k$, warm-started from $z_n$. Heat diffuses, latent state evolves smoothly.
+              <button class="replay-btn" data-replay="heat">▶ Replay time evolution</button>
+            </p>
+          </div>
+
+          <div class="viz-col">
+            <canvas id="heat-viz" width="640" height="500"></canvas>
+            <p class="viz-caption">
+              Initial bump diffuses; high-frequency latent modes decay first (physical).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= 5. EQ HYPER-REDUCTION ============= -->
+      <section data-anim-init="eq">
+        <h2>5. Empirical Quadrature &mdash; pick the 1% that matter</h2>
+
+        <div class="two-col">
+          <div class="math-col tight">
+            <p class="step fragment" data-step="cost">
+              <span class="step-tag">The cost problem</span>
+              Even after projecting to $k$ dims, the projected residual is a sum over
+              <em>all</em> $N$ mesh nodes:
+              \[ r_\text{red}(z) \;=\; J_\mathcal{D}^\top R \;=\; \sum_{i=1}^{N} J_{i,:}^\top R_i \]
+              <small class="why">Cost is $\mathcal{O}(N)$ per Gauss-Newton step. We need to break that.</small>
+            </p>
+
+            <p class="step fragment" data-step="eqidea">
+              <span class="step-tag">The EQ trick</span>
+              Replace the full sum with a weighted sum over a sparse subset
+              $\mathcal{S}\subset\{1,\dots,N\}$:
+              \[ r_\text{red}(z) \;\approx\; \sum_{i\in\mathcal{S}} w_i\, J_{i,:}^\top R_i \]
+              with $|\mathcal{S}| = N_\text{eq} \ll N$ (typically $\sim$ 0.3% of mesh).
+            </p>
+
+            <p class="step fragment" data-step="nnls">
+              <span class="step-tag">How we pick S</span>
+              Solve a non-negative least-squares problem on training snapshots:
+              \[ \min_{w \geq 0}\; \|G^\top w - b\|_2 \]
+              NNLS naturally produces a <em>sparse</em> $w$ — most weights are exactly zero,
+              and the non-zero indices give us $\mathcal{S}$.
+              <button class="replay-btn" data-replay="eq">▶ Replay node selection</button>
+            </p>
+          </div>
+
+          <div class="viz-col">
+            <canvas id="eq-viz" width="440" height="440"></canvas>
+            <p class="viz-caption">
+              All mesh nodes (blue) → NNLS-selected subset (orange). Online cost no longer scales with $N$.
+            </p>
+            <div class="intuition-box" style="margin-top: 0.5em; text-align: left;">
+              <strong>Like polling.</strong> Ask the 1% of nodes NNLS calls most informative,
+              not all $N$. Weights $w$ reproduce the full sum on training snapshots.
+              <strong>For Heat, EQ isn't optional — without it the operator is ill-conditioned and the solver diverges.</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= 6. MATRIX-FREE JAX ============= -->
+      <section>
+        <h2>6. Matrix-free via JAX &mdash; never form J</h2>
+
+        <div class="two-col">
+          <div class="math-col tight">
+            <p class="step fragment" data-step="problem">
+              <span class="step-tag">The problem</span>
+              The decoder Jacobian $J_\mathcal{D} \in \mathbb{R}^{N\times k}$ is enormous:
+              \[ N = 10^6,\; k = 24 \;\Longrightarrow\; J\;\text{has}\;\sim\!2.5\times 10^7\;\text{entries} \approx 96~\text{MB} \]
+              <small class="why">Times 8 GN iters, 50 timesteps, batch&nbsp;…&nbsp;OOM on any GPU.</small>
+            </p>
+
+            <p class="step fragment" data-step="jvp">
+              <span class="step-tag">JAX gives us J·v for free</span>
+              <strong>Forward-mode AD (JVP)</strong> &mdash; one decoder forward pass:
+              \[ J_\mathcal{D}\, v \;=\; \texttt{jax.jvp}(\mathcal{D},\, z,\, v),\quad v \in \mathbb{R}^k \]
+              Cost: same as one decoder eval. Output: $\mathbb{R}^N$ vector.
+            </p>
+
+            <p class="step fragment" data-step="vjp">
+              <span class="step-tag">… and Jᵀ·w too</span>
+              <strong>Reverse-mode AD (VJP)</strong> &mdash; one backward pass:
+              \[ J_\mathcal{D}^\top\, w \;=\; \texttt{jax.vjp}(\mathcal{D},\, z)(w),\quad w \in \mathbb{R}^N \]
+              Cost: same as one decoder eval. Output: $\mathbb{R}^k$ vector.
+            </p>
+
+            <p class="step fragment" data-step="hessian">
+              <span class="step-tag">The Hessian-vector product</span>
+              The reduced Hessian action $H\,p = J^\top K J\, p$ is three operations:
+              \[ p \xrightarrow{\text{JVP}} J p \xrightarrow{K} K J p \xrightarrow{\text{VJP}} J^\top K J p \]
+              <small class="why">CG inner solver only ever needs $H\!\cdot\!p$. We never form $H$ either.</small>
+            </p>
+          </div>
+
+          <div class="viz-col">
+            <!-- SVG flow diagram -->
+            <svg viewBox="0 0 540 460" style="width: 100%; height: auto; max-height: 440px;" xmlns="http://www.w3.org/2000/svg">
+              <!-- Top: J's size visualisation -->
+              <text x="270" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#dc2626">
+                J = N × k matrix
+              </text>
+              <rect x="120" y="35" width="300" height="80" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+              <text x="270" y="78" text-anchor="middle" font-size="22" font-weight="700" fill="#7f1d1d">96 MB</text>
+              <text x="270" y="102" text-anchor="middle" font-size="11" fill="#7f1d1d" font-style="italic">at N=10⁶, k=24</text>
+              <line x1="120" y1="115" x2="420" y2="35" stroke="#dc2626" stroke-width="3"/>
+              <line x1="420" y1="115" x2="120" y2="35" stroke="#dc2626" stroke-width="3"/>
+              <text x="270" y="140" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">never form it</text>
+
+              <!-- Middle: 3-step Hessian-vector product flow -->
+              <text x="270" y="180" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">
+                Hessian-vector product:  H·p = JᵀKJp
+              </text>
+
+              <!-- Step boxes -->
+              <g font-family="Helvetica Neue, Arial">
+                <!-- p -->
+                <rect x="20" y="210" width="80" height="50" rx="6" fill="#eff6ff" stroke="#1e3a8a" stroke-width="1.5"/>
+                <text x="60" y="232" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">p</text>
+                <text x="60" y="250" text-anchor="middle" font-size="10" fill="#6b7280">∈ ℝᵏ</text>
+
+                <!-- arrow JVP -->
+                <line x1="105" y1="235" x2="155" y2="235" stroke="#7c3aed" stroke-width="2"/>
+                <polygon points="148,230 158,235 148,240" fill="#7c3aed"/>
+                <text x="130" y="225" text-anchor="middle" font-size="10" font-weight="600" fill="#7c3aed">JVP</text>
+                <text x="130" y="252" text-anchor="middle" font-size="9" fill="#6b7280" font-style="italic">jax.jvp</text>
+
+                <!-- Jp -->
+                <rect x="160" y="210" width="80" height="50" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
+                <text x="200" y="232" text-anchor="middle" font-size="14" font-weight="700" fill="#7c3aed">Jp</text>
+                <text x="200" y="250" text-anchor="middle" font-size="10" fill="#6b7280">∈ ℝᴺ</text>
+
+                <!-- arrow K -->
+                <line x1="245" y1="235" x2="295" y2="235" stroke="#dc2626" stroke-width="2"/>
+                <polygon points="288,230 298,235 288,240" fill="#dc2626"/>
+                <text x="270" y="225" text-anchor="middle" font-size="10" font-weight="600" fill="#dc2626">SpMV</text>
+                <text x="270" y="252" text-anchor="middle" font-size="9" fill="#6b7280" font-style="italic">K @ ·</text>
+
+                <!-- KJp -->
+                <rect x="300" y="210" width="80" height="50" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+                <text x="340" y="232" text-anchor="middle" font-size="13" font-weight="700" fill="#dc2626">KJp</text>
+                <text x="340" y="250" text-anchor="middle" font-size="10" fill="#6b7280">∈ ℝᴺ</text>
+
+                <!-- arrow VJP -->
+                <line x1="385" y1="235" x2="435" y2="235" stroke="#7c3aed" stroke-width="2"/>
+                <polygon points="428,230 438,235 428,240" fill="#7c3aed"/>
+                <text x="410" y="225" text-anchor="middle" font-size="10" font-weight="600" fill="#7c3aed">VJP</text>
+                <text x="410" y="252" text-anchor="middle" font-size="9" fill="#6b7280" font-style="italic">jax.vjp</text>
+
+                <!-- JTKJp -->
+                <rect x="440" y="210" width="80" height="50" rx="6" fill="#eff6ff" stroke="#1e3a8a" stroke-width="1.5"/>
+                <text x="480" y="232" text-anchor="middle" font-size="12" font-weight="700" fill="#1e3a8a">JᵀKJp</text>
+                <text x="480" y="250" text-anchor="middle" font-size="10" fill="#6b7280">∈ ℝᵏ</text>
+              </g>
+
+              <!-- Bottom: cost callout -->
+              <rect x="60" y="300" width="420" height="60" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+              <text x="270" y="324" text-anchor="middle" font-size="13" font-weight="700" fill="#065f46">
+                Total: 3 cheap ops, no matrices stored
+              </text>
+              <text x="270" y="345" text-anchor="middle" font-size="11" fill="#065f46" font-style="italic">
+                cost ≈ 2 × decoder eval + 1 × sparse SpMV
+              </text>
+
+              <!-- Bottom note -->
+              <text x="270" y="395" text-anchor="middle" font-size="11" fill="#374151" font-style="italic">
+                CG inner solver calls H·p ~10× per GN iteration.
+              </text>
+              <text x="270" y="412" text-anchor="middle" font-size="11" fill="#374151" font-style="italic">
+                Memory stays $\mathcal{O}(N + k)$, never $\mathcal{O}(Nk)$.
+              </text>
+              <text x="270" y="442" text-anchor="middle" font-size="12" font-weight="700" fill="#1e3a8a">
+                This is the whole technical innovation in implementation.
+              </text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="intuition-box" style="margin-top: 0.3em;">
+          <strong>The trick:</strong> JAX never asks "what is J?" — it asks
+          "what does J <em>do</em> to this vector?". Same answer, no memory.
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script src="js/animations.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
